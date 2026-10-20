@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8faf9">
+  <title>到场点名</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      color: #1d2b2e;
+      background: #f8faf9;
+      letter-spacing: 0;
+      --line: #dce4e3;
+      --muted: #667679;
+      --blue: #087bb3;
+      --blue-dark: #07638e;
+      --green: #098b65;
+      --orange: #bd6137;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 280px; }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .48; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible {
+      outline: 3px solid #91d3eb;
+      outline-offset: 3px;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .wrap { width: min(100% - 40px, 860px); margin-inline: auto; }
+    .topbar { background: #fff; border-bottom: 1px solid var(--line); }
+    .topbar-inner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 76px;
+    }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      flex: none;
+      background: #087bb3;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 19px;
+      font-weight: 700;
+    }
+    h1 { margin: 0; font-size: 20px; line-height: 1.2; font-weight: 700; }
+    .header-subtitle { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .header-count {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    main { padding-bottom: 44px; }
+    .roster-section { border-bottom: 1px solid var(--line); }
+    details { padding: 0; }
+    summary {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 62px;
+      list-style: none;
+      cursor: pointer;
+      font-weight: 650;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::after {
+      content: "+";
+      margin-left: auto;
+      color: var(--blue);
+      font-size: 22px;
+      font-weight: 400;
+      line-height: 1;
+    }
+    details[open] summary::after { content: "-"; }
+    .summary-count { color: var(--muted); font-size: 13px; font-weight: 400; }
+    .editor-body { padding: 0 0 24px; }
+    .field-label { display: block; margin-bottom: 9px; font-size: 13px; color: #485b5e; }
+    textarea {
+      display: block;
+      width: 100%;
+      min-height: 116px;
+      resize: vertical;
+      padding: 12px 14px;
+      border: 1px solid #bfcfce;
+      border-radius: 6px;
+      background: #fff;
+      color: #1d2b2e;
+      line-height: 1.55;
+    }
+    textarea::placeholder, input::placeholder { color: #849194; }
+    .editor-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 41px;
+      padding: 9px 16px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.25;
+      white-space: normal;
+      text-align: center;
+      transition: background-color .15s, border-color .15s;
+    }
+    .button-primary { background: var(--blue); color: #fff; }
+    .button-primary:hover:not(:disabled) { background: var(--blue-dark); }
+    .button-secondary { background: #fff; border-color: #b9cdcf; color: #234146; }
+    .button-secondary:hover:not(:disabled) { background: #eaf3f4; }
+    .button-danger { background: transparent; border-color: #e3cfc8; color: #9b4e35; }
+    .button-danger:hover:not(:disabled) { background: #fff1ec; }
+    .stats-section { padding: 27px 0 24px; border-bottom: 1px solid var(--line); }
+    .section-kicker { margin: 0 0 9px; color: var(--muted); font-size: 13px; font-weight: 600; }
+    .stats-row { display: flex; align-items: end; justify-content: space-between; gap: 18px; }
+    .stats-text { margin: 0; font-size: 19px; line-height: 1.3; color: #3d5053; }
+    .stats-text strong { color: #142e34; font-size: 29px; font-weight: 750; }
+    .stats-text .slash { padding: 0 4px; color: #a4b0b1; }
+    .absent-count { padding-bottom: 5px; color: var(--muted); font-size: 14px; white-space: nowrap; }
+    .progress {
+      height: 5px;
+      margin-top: 18px;
+      overflow: hidden;
+      background: #e5ebea;
+      border-radius: 5px;
+    }
+    .progress-fill { height: 100%; width: 0; background: var(--green); transition: width .2s; }
+    .controls-section { padding-top: 24px; }
+    .mode-row { display: flex; align-items: end; justify-content: space-between; gap: 18px; }
+    .control-label { display: block; margin-bottom: 9px; color: #46595c; font-size: 13px; font-weight: 600; }
+    .mode-switch { display: inline-flex; padding: 3px; border: 1px solid #cddadb; border-radius: 7px; background: #edf2f2; }
+    .mode-button {
+      min-width: 98px;
+      min-height: 34px;
+      padding: 7px 12px;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: #53686b;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .mode-button[aria-pressed="true"] { background: #fff; color: #163d47; box-shadow: 0 1px 3px #173b4522; }
+    .legend { display: flex; align-items: center; gap: 7px; padding-bottom: 7px; color: #526568; font-size: 13px; }
+    .legend-swatch { width: 13px; height: 13px; flex: none; border: 1px solid var(--green); border-radius: 2px; background: #e7f8f0; }
+    .legend[data-mode="reverse"] .legend-swatch { border-color: var(--orange); background: #fff0e8; }
+    .filter-row { display: flex; align-items: center; gap: 16px; margin-top: 22px; }
+    .search-input {
+      width: min(100%, 390px);
+      min-height: 42px;
+      padding: 9px 12px;
+      border: 1px solid #c6d4d5;
+      border-radius: 6px;
+      background: #fff;
+      color: #203337;
+      font-size: 14px;
+    }
+    .only-absent { display: inline-flex; align-items: center; gap: 7px; color: #344d51; font-size: 14px; white-space: nowrap; cursor: pointer; }
+    .only-absent input { width: 17px; height: 17px; margin: 0; accent-color: var(--blue); cursor: pointer; }
+    .grid-heading { display: flex; align-items: baseline; gap: 10px; margin: 27px 0 13px; }
+    .grid-heading h2, .actions-section h2 { margin: 0; font-size: 16px; font-weight: 700; }
+    .visible-count { color: var(--muted); font-size: 13px; }
+    .person-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 9px; }
+    .person {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 102px;
+      padding: 8px;
+      overflow: hidden;
+      border: 1px solid #dce4e5;
+      border-radius: 3px;
+      background: #f0f3f4;
+      color: #66767a;
+      font-size: 16px;
+      font-weight: 650;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+      text-align: center;
+      transition: background-color .15s, border-color .15s, color .15s;
+    }
+    .person:hover { border-color: #8fa7aa; }
+    .person-name { display: block; width: 100%; min-width: 0; }
+    .person.is-marked { border-color: var(--green); box-shadow: inset 0 0 0 1px var(--green); background: #e9faf2; color: #214e41; }
+    .person.is-marked::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 26px;
+      height: 26px;
+      background: var(--green);
+      clip-path: polygon(100% 0, 100% 100%, 0 100%);
+    }
+    .person.is-marked::before {
+      content: "\2713";
+      position: absolute;
+      z-index: 1;
+      right: 2px;
+      bottom: 0;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 750;
+      line-height: 1;
+    }
+    .person-grid[data-mode="reverse"] .person.is-marked { border-color: var(--orange); box-shadow: inset 0 0 0 1px var(--orange); background: #fff0e8; color: #824027; }
+    .person-grid[data-mode="reverse"] .person.is-marked::after { background: var(--orange); }
+    .empty-state {
+      display: grid;
+      place-items: center;
+      min-height: 136px;
+      border: 1px dashed #cdd8d8;
+      border-radius: 4px;
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+    }
+    .empty-state[hidden] { display: none; }
+    .actions-section { margin-top: 31px; padding-top: 22px; border-top: 1px solid var(--line); }
+    .actions-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .toast {
+      position: fixed;
+      z-index: 10;
+      left: 50%;
+      bottom: 24px;
+      max-width: min(90vw, 440px);
+      padding: 10px 15px;
+      border-radius: 6px;
+      background: #203c42;
+      color: #fff;
+      font-size: 14px;
+      line-height: 1.45;
+      text-align: center;
+      box-shadow: 0 8px 26px #1a333b2b;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 8px);
+      transition: opacity .18s, transform .18s;
+    }
+    .toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
+    @media (max-width: 600px) {
+      .wrap { width: min(100% - 28px, 860px); }
+      .topbar-inner { min-height: 66px; }
+      h1 { font-size: 18px; }
+      .brand-mark { width: 34px; height: 34px; font-size: 17px; }
+      .stats-section { padding: 22px 0 20px; }
+      .stats-text { font-size: 15px; }
+      .stats-text strong { font-size: 24px; }
+      .absent-count { font-size: 12px; }
+      .mode-row { align-items: start; flex-direction: column; gap: 10px; }
+      .legend { padding-bottom: 0; }
+      .filter-row { align-items: stretch; flex-direction: column; gap: 13px; margin-top: 20px; }
+      .search-input { width: 100%; }
+      .grid-heading { margin-top: 24px; }
+      .person-grid { gap: 5px; }
+      .person { height: 74px; padding: 4px; font-size: 13px; }
+      .person.is-marked::after { width: 21px; height: 21px; }
+      .person.is-marked::before { right: 1px; bottom: 0; font-size: 12px; }
+      .actions-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .actions-grid .button { min-height: 44px; padding-inline: 8px; font-size: 13px; }
+    }
+    @media (max-width: 340px) {
+      .header-count { display: none; }
+      .person { height: 67px; font-size: 12px; }
+      .stats-row { gap: 8px; }
+      .stats-text { font-size: 13px; }
+      .stats-text strong { font-size: 21px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <span class="brand-mark" aria-hidden="true">点</span>
+      <div>
+        <h1>到场点名</h1>
+        <p class="header-subtitle">活动名单</p>
+      </div>
+      <span class="header-count" id="headerCount">0 人</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="roster-section" aria-label="名单录入">
+      <details id="rosterPanel" open>
+        <summary>名单录入 <span class="summary-count" id="rosterSummary">尚未生成</span></summary>
+        <div class="editor-body">
+          <label class="field-label" for="rosterInput">姓名名单</label>
+          <textarea id="rosterInput" placeholder="输入姓名，用换行符分隔" spellcheck="false"></textarea>
+          <div class="editor-actions">
+            <button class="button button-primary" id="generateButton" type="button">生成方格</button>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <section class="stats-section" aria-label="到场统计">
+      <p class="section-kicker">点名进度</p>
+      <div class="stats-row">
+        <p class="stats-text">已到场 <strong id="presentCount">0</strong><span class="slash">/</span>总人数 <strong id="totalCount">0</strong></p>
+        <span class="absent-count" id="absentCount">未到场 0</span>
+      </div>
+      <div class="progress" id="progress" role="progressbar" aria-label="到场比例" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </section>
+
+    <section class="controls-section" aria-label="点名人员">
+      <div class="mode-row">
+        <div>
+          <span class="control-label">点名模式</span>
+          <div class="mode-switch" role="group" aria-label="点名模式">
+            <button class="mode-button" id="normalMode" type="button" aria-pressed="true">正向模式</button>
+            <button class="mode-button" id="reverseMode" type="button" aria-pressed="false">反转模式</button>
+          </div>
+        </div>
+        <div class="legend" id="legend" data-mode="normal">
+          <span class="legend-swatch" aria-hidden="true"></span>
+          <span id="legendText">点亮：已到场</span>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        <label class="sr-only" for="searchInput">搜索姓名</label>
+        <input class="search-input" id="searchInput" type="search" placeholder="搜索姓名" autocomplete="off">
+        <label class="only-absent"><input id="onlyAbsent" type="checkbox">只看未到场</label>
+      </div>
+
+      <div class="grid-heading">
+        <h2>人员名单</h2>
+        <span class="visible-count" id="visibleCount">显示 0 人</span>
+      </div>
+      <div class="person-grid" id="personGrid" data-mode="normal"></div>
+      <div class="empty-state" id="emptyState">暂无名单</div>
+    </section>
+
+    <section class="actions-section" aria-label="点名结果">
+      <h2>点名结果</h2>
+      <div class="actions-grid">
+        <button class="button button-secondary" id="copyPresent" type="button" disabled>复制到场名单</button>
+        <button class="button button-secondary" id="copyAbsent" type="button" disabled>复制未到场名单</button>
+        <button class="button button-secondary" id="exportButton" type="button" disabled>导出 CSV</button>
+        <button class="button button-danger" id="resetButton" type="button" disabled>重置所有勾选状态</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = "rollcall_state_v1";
+      const $ = (id) => document.getElementById(id);
+      const rosterPanel = $("rosterPanel");
+      const rosterInput = $("rosterInput");
+      const searchInput = $("searchInput");
+      const onlyAbsent = $("onlyAbsent");
+      const personGrid = $("personGrid");
+      const toast = $("toast");
+      let toastTimer;
+      let state = loadState();
+
+      function parseNames(text) {
+        const seen = new Set();
+        return text.replace(/^\uFEFF/, "").split(/\r\n|\n|\r/).map((name) => name.trim()).filter((name) => {
+          if (!name || seen.has(name)) return false;
+          seen.add(name);
+          return true;
+        });
+      }
+
+      function loadState() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          if (!saved || !Array.isArray(saved.names) || !Array.isArray(saved.present)) throw new Error("Invalid state");
+          if (!saved.names.every((name) => typeof name === "string") || !saved.present.every((name) => typeof name === "string")) throw new Error("Invalid names");
+          const names = parseNames(saved.names.join("\n"));
+          const known = new Set(names);
+          return {
+            names,
+            present: new Set(saved.present.filter((name) => known.has(name))),
+            mode: saved.mode === "reverse" ? "reverse" : "normal",
+            updatedAt: Number.isFinite(saved.updatedAt) ? saved.updatedAt : null
+          };
+        } catch {
+          return { names: [], present: new Set(), mode: "normal", updatedAt: null };
+        }
+      }
+
+      function saveState() {
+        state.updatedAt = Date.now();
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            names: state.names,
+            present: [...state.present],
+            mode: state.mode,
+            updatedAt: state.updatedAt
+          }));
+        } catch {
+          showToast("当前浏览器无法保存点名结果");
+        }
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("is-visible");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("is-visible"), 2300);
+      }
+
+      function renderGrid() {
+        const query = searchInput.value.trim().toLocaleLowerCase();
+        const fragment = document.createDocumentFragment();
+        let visible = 0;
+        state.names.forEach((name, index) => {
+          const present = state.present.has(name);
+          if (query && !name.toLocaleLowerCase().includes(query)) return;
+          if (onlyAbsent.checked && present) return;
+          const marked = state.mode === "normal" ? present : !present;
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "person" + (marked ? " is-marked" : "");
+          button.dataset.index = String(index);
+          button.setAttribute("aria-pressed", String(marked));
+          button.setAttribute("aria-label", `${name}，${present ? "已到场" : "未到场"}，点击标记为${present ? "未到场" : "已到场"}`);
+          button.title = name;
+          const label = document.createElement("span");
+          label.className = "person-name";
+          label.textContent = name;
+          button.appendChild(label);
+          fragment.appendChild(button);
+          visible++;
+        });
+        personGrid.dataset.mode = state.mode;
+        personGrid.replaceChildren(fragment);
+        fitNames();
+        $("visibleCount").textContent = `显示 ${visible} 人`;
+        $("emptyState").hidden = visible > 0;
+        $("emptyState").textContent = state.names.length ? "没有匹配的人员" : "暂无名单";
+      }
+
+      function fitNames() {
+        for (const button of personGrid.children) {
+          button.style.fontSize = "";
+          const style = getComputedStyle(button);
+          const availableHeight = button.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+          const label = button.firstElementChild;
+          let size = parseFloat(style.fontSize);
+          while (label.scrollHeight > availableHeight && size > 8) {
+            size--;
+            button.style.fontSize = `${size}px`;
+          }
+        }
+      }
+
+      function render() {
+        const total = state.names.length;
+        const present = state.present.size;
+        $("headerCount").textContent = `${total} 人`;
+        $("rosterSummary").textContent = total ? `${total} 人` : "尚未生成";
+        $("presentCount").textContent = String(present);
+        $("totalCount").textContent = String(total);
+        $("absentCount").textContent = `未到场 ${total - present}`;
+        const percent = total ? Math.round(present / total * 100) : 0;
+        $("progressFill").style.width = `${percent}%`;
+        $("progress").setAttribute("aria-valuenow", String(percent));
+        $("normalMode").setAttribute("aria-pressed", String(state.mode === "normal"));
+        $("reverseMode").setAttribute("aria-pressed", String(state.mode === "reverse"));
+        $("legend").dataset.mode = state.mode;
+        $("legendText").textContent = state.mode === "normal" ? "点亮：已到场" : "点亮：未到场";
+        for (const id of ["copyPresent", "copyAbsent", "exportButton", "resetButton"]) $(id).disabled = total === 0;
+        searchInput.disabled = total === 0;
+        onlyAbsent.disabled = total === 0;
+        renderGrid();
+      }
+
+      function generateRoster() {
+        const names = parseNames(rosterInput.value);
+        if (!names.length) {
+          showToast("请先输入姓名名单");
+          rosterInput.focus();
+          return;
+        }
+        const same = names.length === state.names.length && names.every((name, index) => name === state.names[index]);
+        if (!same && state.names.length && !window.confirm("新名单将替换当前名单并清空点名结果，继续吗？")) return;
+        if (!same) {
+          state.names = names;
+          state.present = new Set(state.mode === "reverse" ? names : []);
+          searchInput.value = "";
+          onlyAbsent.checked = false;
+          saveState();
+        }
+        rosterInput.value = names.join("\n");
+        rosterPanel.open = false;
+        render();
+        showToast(same ? "名单未变化，点名结果已保留" : `已生成 ${names.length} 个方格`);
+      }
+
+      function setMode(mode) {
+        if (state.mode === mode) return;
+        // Keep the marked tiles fixed while reversing what marked means.
+        state.present = new Set(state.names.filter((name) => !state.present.has(name)));
+        state.mode = mode;
+        saveState();
+        render();
+      }
+
+      function resetMarks() {
+        if (!state.names.length) return;
+        if (!window.confirm("将所有方格恢复到当前模式的初始状态，继续吗？")) return;
+        state.present = new Set(state.mode === "reverse" ? state.names : []);
+        saveState();
+        render();
+        showToast("已重置所有勾选状态");
+      }
+
+      async function writeClipboard(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          try {
+            await navigator.clipboard.writeText(text);
+            return;
+          } catch { /* Fall back for browsers without clipboard permission. */ }
+        }
+        const input = document.createElement("textarea");
+        input.value = text;
+        input.style.position = "fixed";
+        input.style.left = "-9999px";
+        document.body.appendChild(input);
+        input.select();
+        const copied = document.execCommand("copy");
+        input.remove();
+        if (!copied) throw new Error("Copy failed");
+      }
+
+      async function copyList(present) {
+        const names = state.names.filter((name) => state.present.has(name) === present);
+        if (!names.length) {
+          showToast(present ? "暂无到场人员" : "暂无未到场人员");
+          return;
+        }
+        try {
+          await writeClipboard(names.join("\n"));
+          showToast(`已复制 ${names.length} 人`);
+        } catch {
+          showToast("复制失败，请检查浏览器的剪贴板权限");
+        }
+      }
+
+      function csvCell(value) {
+        const safe = /^[=+\-@\t]/.test(value) ? "'" + value : value;
+        return `"${safe.replaceAll('"', '""')}"`;
+      }
+
+      function exportCsv() {
+        const rows = ["姓名,状态", ...state.names.map((name) => `${csvCell(name)},${state.present.has(name) ? "已到场" : "未到场"}`)];
+        const now = new Date();
+        const pad = (value) => String(value).padStart(2, "0");
+        const filename = `点名结果_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.csv`;
+        const blob = new Blob(["\uFEFF", rows.join("\r\n") + "\r\n"], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast("CSV 已导出");
+      }
+
+      $("generateButton").addEventListener("click", generateRoster);
+      rosterInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+          event.preventDefault();
+          generateRoster();
+        }
+      });
+      $("normalMode").addEventListener("click", () => setMode("normal"));
+      $("reverseMode").addEventListener("click", () => setMode("reverse"));
+      searchInput.addEventListener("input", renderGrid);
+      onlyAbsent.addEventListener("change", renderGrid);
+      window.addEventListener("resize", fitNames);
+      personGrid.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-index]");
+        if (!button) return;
+        const index = Number(button.dataset.index);
+        const name = state.names[index];
+        if (!name) return;
+        if (state.present.has(name)) state.present.delete(name);
+        else state.present.add(name);
+        saveState();
+        render();
+        const nextButton = [...personGrid.children].find((child) => Number(child.dataset.index) === index);
+        if (nextButton) nextButton.focus({ preventScroll: true });
+        else searchInput.focus({ preventScroll: true });
+      });
+      $("copyPresent").addEventListener("click", () => copyList(true));
+      $("copyAbsent").addEventListener("click", () => copyList(false));
+      $("exportButton").addEventListener("click", exportCsv);
+      $("resetButton").addEventListener("click", resetMarks);
+
+      rosterInput.value = state.names.join("\n");
+      rosterPanel.open = state.names.length === 0;
+      render();
+    })();
+  </script>
+</body>
+</html>
