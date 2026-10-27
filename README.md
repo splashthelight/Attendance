@@ -1,5 +1,7 @@
 # 到场点名
 
+**[![在线体验](https://img.shields.io/badge/🚀_在线体验-attendance--en0.pages.dev-4CAF50?style=for-the-badge)](https://attendance-en0.pages.dev)**
+
 一个无需构建的静态点名页面。直接在浏览器打开 `index.html` 即可使用。
 
 ## 功能
